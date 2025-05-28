@@ -1,0 +1,2 @@
+src/main/resources/TrainingData/* filter=lfs diff=lfs merge=lfs -text
+src/main/resources/PredictionData/* filter=lfs diff=lfs merge=lfs -text

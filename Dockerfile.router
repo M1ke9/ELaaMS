@@ -1,0 +1,8 @@
+FROM openjdk:17-slim
+WORKDIR /app
+
+# Copy the newly named JAR from your Maven target directory
+COPY target/ELaaMS-app-jar-with-dependencies.jar /app/ELaaMS-app.jar
+
+# Run the new JAR
+ENTRYPOINT ["java", "-jar", "/app/ELaaMS-app.jar"]

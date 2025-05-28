@@ -1,0 +1,243 @@
+version: '3.8'
+services:
+  # --------------------------------------------------------------------------------
+  # Kafka Broker 1 (Controller + Broker)
+  # --------------------------------------------------------------------------------
+  broker1:
+    image: apache/kafka:latest
+    container_name: broker1
+    ports:
+      - "29092:29092" # EXTERNAL listener for client connections (localhost:29092)
+      - "19093:9093"  # CONTROLLER listener (internal, mapped to avoid conflicts)
+      - "19094:9092"  # INTERNAL listener (internal, mapped to avoid conflicts)
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://broker1:9092,EXTERNAL://localhost:29092,CONTROLLER://broker1:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker1:9093,2@broker2:9093,3@broker3:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 2
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_MESSAGE_MAX_BYTES: 20971520 # 20 MB
+      KAFKA_REPLICA_FETCH_MAX_BYTES: 20971520 # 20 MB (consistent with message max bytes)
+    volumes:
+      - "C:/docker/kafka-logs1:/var/lib/kafka/data" # Persistent volume for broker 1 data
+    networks:
+      - mynet
+
+  # --------------------------------------------------------------------------------
+  # Kafka Broker 2 (Controller + Broker)
+  # --------------------------------------------------------------------------------
+  broker2:
+    image: apache/kafka:latest
+    container_name: broker2
+    ports:
+      - "39092:29092" # EXTERNAL listener for client connections (localhost:39092)
+      - "29093:9093"  # CONTROLLER listener (internal, mapped to avoid conflicts)
+      - "29094:9092"  # INTERNAL listener (internal, mapped to avoid conflicts)
+    environment:
+      KAFKA_NODE_ID: 2
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://broker2:9092,EXTERNAL://localhost:39092,CONTROLLER://broker2:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker1:9093,2@broker2:9093,3@broker3:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 2
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_MESSAGE_MAX_BYTES: 20971520 # 20 MB
+      KAFKA_REPLICA_FETCH_MAX_BYTES: 20971520 # 20 MB
+    volumes:
+      - "C:/docker/kafka-logs2:/var/lib/kafka/data" # Persistent volume for broker 2 data
+    networks:
+      - mynet
+
+  # --------------------------------------------------------------------------------
+  # Kafka Broker 3 (Controller + Broker)
+  # --------------------------------------------------------------------------------
+  broker3:
+    image: apache/kafka:latest
+    container_name: broker3
+    ports:
+      - "49092:29092" # EXTERNAL listener for client connections (localhost:49092)
+      - "39093:9093"  # CONTROLLER listener (internal, mapped to avoid conflicts)
+      - "39094:9092"  # INTERNAL listener (internal, mapped to avoid conflicts)
+    environment:
+      KAFKA_NODE_ID: 3
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://broker3:9092,EXTERNAL://localhost:49092,CONTROLLER://broker3:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker1:9093,2@broker2:9093,3@broker3:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 2
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_MESSAGE_MAX_BYTES: 20971520 # 20 MB
+      KAFKA_REPLICA_FETCH_MAX_BYTES: 20971520 # 20 MB
+    volumes:
+      - "C:/docker/kafka-logs3:/var/lib/kafka/data" # Persistent volume for broker 3 data
+    networks:
+      - mynet
+
+  # --------------------------------------------------
+  # Kafka Setup - Creates Topics
+  # --------------------------------------------------
+  kafka-setup:
+    image: apache/kafka:latest
+    container_name: kafka-setup
+    depends_on:
+      broker1:
+        condition: service_started # Or service_healthy if you have health checks
+      broker2:
+        condition: service_started
+      broker3:
+        condition: service_started
+    networks:
+      - mynet
+    working_dir: /opt/kafka/bin
+    command: >
+      bash -c "
+        echo 'Waiting a bit for brokers to elect a controller...' &&
+        sleep 15 &&
+        echo 'Trying to create topics...' &&
+        ./kafka-topics.sh --bootstrap-server broker1:9092,broker2:9092,broker3:9092 --create --if-not-exists --topic control-topic --partitions 12 --replication-factor 3 &&
+        ./kafka-topics.sh --bootstrap-server broker1:9092,broker2:9092,broker3:9092 --create --if-not-exists --topic training-topic --partitions 12 --replication-factor 3 &&
+        ./kafka-topics.sh --bootstrap-server broker1:9092,broker2:9092,broker3:9092 --create --if-not-exists --topic prediction-topic --partitions 12 --replication-factor 3 &&
+        ./kafka-topics.sh --bootstrap-server broker1:9092,broker2:9092,broker3:9092 --create --if-not-exists --topic active-microservices --partitions 1 --replication-factor 3 &&
+        ./kafka-topics.sh --bootstrap-server broker1:9092,broker2:9092,broker3:9092 --create --if-not-exists --topic model-updates-topic --partitions 1 --replication-factor 3 &&
+        echo 'Done creating topics.'
+      "
+
+  # --------------------------------------------------
+  # Router containers (myapp1-4)
+  # --------------------------------------------------
+  myapp1:
+    build:
+      context: .
+      dockerfile: Dockerfile.router
+    container_name: myapp1
+    depends_on:
+      - broker1 # Depends on at least one broker, or all for robustness
+      - broker2
+      - broker3
+    environment:
+      BOOTSTRAP_SERVERS: "broker1:9092,broker2:9092,broker3:9092" # Connect to all brokers in the cluster
+    volumes:
+      - "C:/docker/router-state1:/tmp/kafka-streams"
+    networks:
+      - mynet
+
+  myapp2:
+    build:
+      context: .
+      dockerfile: Dockerfile.router
+    container_name: myapp2
+    depends_on:
+      - broker1
+      - broker2
+      - broker3
+    environment:
+      BOOTSTRAP_SERVERS: "broker1:9092,broker2:9092,broker3:9092"
+    volumes:
+      - "C:/docker/router-state2:/tmp/kafka-streams"
+    networks:
+      - mynet
+
+  myapp3:
+    build:
+      context: .
+      dockerfile: Dockerfile.router
+    container_name: myapp3
+    depends_on:
+      - broker1
+      - broker2
+      - broker3
+    environment:
+      BOOTSTRAP_SERVERS: "broker1:9092,broker2:9092,broker3:9092"
+    volumes:
+      - "C:/docker/router-state3:/tmp/kafka-streams"
+    networks:
+      - mynet
+
+  myapp4:
+    build:
+      context: .
+      dockerfile: Dockerfile.router
+    container_name: myapp4
+    depends_on:
+      - broker1
+      - broker2
+      - broker3
+    environment:
+      BOOTSTRAP_SERVERS: "broker1:9092,broker2:9092,broker3:9092"
+    volumes:
+      - "C:/docker/router-state4:/tmp/kafka-streams"
+    networks:
+      - mynet
+
+  # --------------------------------------------------
+  # Pre-built Router image
+  # --------------------------------------------------
+  router:
+    image: mmarketakis/router-app:1.1 # or 2.0 if you rebuilt
+    container_name: prebuilt-router # Renamed to avoid conflict if myappX uses 'router' internally
+    depends_on:
+      - broker1
+      - broker2
+      - broker3
+    environment:
+      BOOTSTRAP_SERVERS: "broker1:9092,broker2:9092,broker3:9092"
+    networks:
+      - mynet
+
+  # --------------------------------------------------
+  # Control producer
+  # --------------------------------------------------
+  controlproducer:
+    build:
+      context: .
+      dockerfile: Dockerfile.control
+    container_name: controlproducer
+    depends_on:
+      - broker1
+      - broker2
+      - broker3
+    environment:
+      BOOTSTRAP_SERVERS: "broker1:9092,broker2:9092,broker3:9092"
+    networks:
+      - mynet
+
+  # --------------------------------------------------
+  # Data producer
+  # --------------------------------------------------
+  dataproducer:
+    build:
+      context: .
+      dockerfile: Dockerfile.data
+    container_name: dataproducer
+    depends_on:
+      - broker1
+      - broker2
+      - broker3
+    environment:
+      BOOTSTRAP_SERVERS: "broker1:9092,broker2:9092,broker3:9092"
+    networks:
+      - mynet
+
+networks:
+  mynet:
+    driver: bridge

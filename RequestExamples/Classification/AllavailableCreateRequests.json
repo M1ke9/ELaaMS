@@ -1,0 +1,86 @@
+[
+
+  {
+    "commandType": "Create",
+    "algorithmID": 1,
+    "algorithmType": "HoeffdingTree",
+    "streamID": "AegeanShips",
+    "dataSetKey": "Ships",
+    "hyperParams": {
+      "gracePeriod": 200,
+      "splitConfidence": 0.01,
+      "tieThresholdOption": 0.05
+    },
+    "target": "status",
+    "taskType": "classification"
+  },
+
+  {
+    "commandType": "Create",
+    "algorithmID": 2,
+    "algorithmType": "Naive-Bayes",
+    "streamID": "AegeanShips",
+    "dataSetKey": "Ships",
+    "hyperParams": {
+    },
+    "target": "status",
+    "taskType": "classification"
+  },
+
+
+  {
+    "commandType": "Create",
+    "algorithmID": 3,
+    "algorithmType": "kNN",
+    "streamID": "AegeanShips",
+    "dataSetKey": "Ships",
+    "hyperParams": {
+      "k": 5
+    },
+    "target": "status",
+    "taskType": "classification"
+  },
+
+  {
+    "commandType": "Create",
+    "algorithmID": 4,
+    "algorithmType": "Random-Forest",
+    "streamID": "AegeanShips",
+    "dataSetKey": "Ships",
+    "hyperParams": {
+      "ensembleSize": 3
+    },
+    "target": "status",
+    "taskType": "classification"
+  },
+
+  {
+    "commandType": "Create",
+    "algorithmID": 6,
+    "algorithmType": "HAT",
+    "streamID": "AegeanShips",
+    "dataSetKey": "Ships",
+    "hyperParams": {
+      "gracePeriod": 300,
+      "splitConfidence": 0.001,
+      "tieThresholdOption": 0.05
+    },
+    "target": "status",
+    "taskType": "classification"
+  },
+
+  {
+    "commandType": "Create",
+    "algorithmID": 5,
+    "algorithmType": "Perceptron",
+    "streamID": "AegeanShips",
+    "dataSetKey": "Ships",
+    "hyperParams": {
+      "learningRatio": 0.001
+    },
+    "target": "status",
+    "taskType": "classification"
+  }
+
+
+]

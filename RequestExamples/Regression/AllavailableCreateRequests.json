@@ -1,0 +1,57 @@
+
+[
+{
+  "commandType": "Create",
+  "algorithmID": 7,
+  "algorithmType": "SGD",
+  "streamID": "EURTRY",
+  "dataSetKey": "Forex",
+  "hyperParams": {
+    "lossFunctionOption": 2
+
+  },
+  "target": "price",
+  "taskType": "regression"
+},
+
+{
+"commandType": "Create",
+"algorithmID": 9,
+"algorithmType": "Amrules",
+"streamID": "EURTRY",
+"dataSetKey": "Forex",
+"hyperParams": {
+
+},
+"target": "price",
+"taskType": "regression"
+},
+
+
+{
+"commandType": "Create",
+"algorithmID": 8,
+"algorithmType": "FIMT-DD",
+"streamID": "EURTRY",
+"dataSetKey": "Forex",
+"hyperParams": {
+},
+"target": "price",
+"taskType": "regression"
+},
+
+
+{
+"commandType": "Create",
+"algorithmID": 3,
+"algorithmType": "kNN",
+"streamID": "EURTRY",
+"dataSetKey": "Forex",
+"hyperParams": {
+"k": 3
+},
+"target": "price",
+"taskType": "regression"
+}
+
+]
