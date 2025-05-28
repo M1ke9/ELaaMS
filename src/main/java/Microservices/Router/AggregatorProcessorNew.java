@@ -20,13 +20,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
 /**
- * Approach B aggregator => each store record is 1 microservice.
+ *  aggregator => each store record is 1 microservice.
  * The final partition key is aggregatorBase + "___" + microserviceBase.
  * aggregatorBase = (streamId-datasetKey) or datasetKey alone
  * microserviceBase = algorithmType#target#paramSignature
  * => storeKey = exactly that partition key.
  *
- * We parse aggregatorBase so we can create the data/pred topics "DataTopic-..." or "PredTopic-..."
+ * We parse aggregatorBase so we can create the data/pred topics "DataTopic-" or "PredTopic-"
  */
 public class AggregatorProcessorNew implements Processor<String, ControlStructure, String, MicroServiceInfo> {
     private static final ConcurrentHashMap<String, GenericMLAlgorithmMicroservice> localMicroMap = new ConcurrentHashMap<>();

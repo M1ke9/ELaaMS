@@ -23,10 +23,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
 /**
- * Processes "CREATE" / "DELETE" commands and updates membership
- * in a KeyValueStore<aggregatorKey, MicroServiceInfo>.
- * aggregatorKey can be (streamId#datasetKey) or just datasetKey,
- * depending on whether the command’s streamId was empty.
+ This code is working for the control commands in case we round robin them among router instances.
+ This way we achieve generally better distribution,but there's the risk of duplicate creation.
+ In case of round robin the creation requests, delete requests are replicated in order to find the corresponding task that holds the microservice.
  */
 public class AggregatorProcessor1 implements Processor<String, ControlStructure, String, MicroServiceInfo> {
     private static final String BOOTSTRAP_SERVERS = EnvironmentConfiguration.getBootstrapServers();

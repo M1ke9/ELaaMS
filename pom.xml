@@ -155,7 +155,7 @@
                             </descriptorRefs>
                             <archive>
                                 <manifest>
-                                    <mainClass>Microservices.Router.RouterGlobalExample</mainClass>
+                                    <mainClass>Microservices.Router.RouterMicroservice</mainClass>
                                 </manifest>
                             </archive>
                         </configuration>

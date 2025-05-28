@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *  - GlobalKTable from "active-microservices"
  *  - KStream from "training-topic" - "prediction-topic " (same pattern) => join with GlobalKTable => produce to microservice topics
  */
-public class RouterGlobalExample {
+public class RouterMicroservice {
 
     private final ConcurrentHashMap<String, EnsembleAggregatorMicroservice> aggregatorMap;
     private EnsembleAggregatorMicroservice aggregator;
@@ -72,7 +72,7 @@ public class RouterGlobalExample {
     private long startTime;
     private long lastLogTime;
 
-    public RouterGlobalExample() {
+    public RouterMicroservice() {
         this.startTime = System.currentTimeMillis();
         this.lastLogTime = this.startTime;
 
@@ -566,7 +566,7 @@ public class RouterGlobalExample {
     public static void main(String[] args) {
 
 
-        RouterGlobalExample router = new RouterGlobalExample();
+        RouterMicroservice router = new RouterMicroservice();
         router.clear();
 
         // attach shutdown handler to catch SIGINT

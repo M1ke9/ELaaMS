@@ -114,9 +114,9 @@ services:
         echo 'Waiting a bit for brokers to elect a controller...' &&
         sleep 15 &&
         echo 'Trying to create topics...' &&
-        ./kafka-topics.sh --bootstrap-server broker1:9092,broker2:9092,broker3:9092 --create --if-not-exists --topic control-topic --partitions 12 --replication-factor 3 &&
-        ./kafka-topics.sh --bootstrap-server broker1:9092,broker2:9092,broker3:9092 --create --if-not-exists --topic training-topic --partitions 12 --replication-factor 3 &&
-        ./kafka-topics.sh --bootstrap-server broker1:9092,broker2:9092,broker3:9092 --create --if-not-exists --topic prediction-topic --partitions 12 --replication-factor 3 &&
+        ./kafka-topics.sh --bootstrap-server broker1:9092,broker2:9092,broker3:9092 --create --if-not-exists --topic control-topic --partitions 8 --replication-factor 3 &&
+        ./kafka-topics.sh --bootstrap-server broker1:9092,broker2:9092,broker3:9092 --create --if-not-exists --topic training-topic --partitions 8 --replication-factor 3 &&
+        ./kafka-topics.sh --bootstrap-server broker1:9092,broker2:9092,broker3:9092 --create --if-not-exists --topic prediction-topic --partitions 8 --replication-factor 3 &&
         ./kafka-topics.sh --bootstrap-server broker1:9092,broker2:9092,broker3:9092 --create --if-not-exists --topic active-microservices --partitions 1 --replication-factor 3 &&
         ./kafka-topics.sh --bootstrap-server broker1:9092,broker2:9092,broker3:9092 --create --if-not-exists --topic model-updates-topic --partitions 1 --replication-factor 3 &&
         echo 'Done creating topics.'
@@ -190,11 +190,11 @@ services:
       - mynet
 
   # --------------------------------------------------
-  # Pre-built Router image
+  # Pre-built Router image ( AArch64)
   # --------------------------------------------------
   router:
-    image: mmarketakis/router-app:1.1 # or 2.0 if you rebuilt
-    container_name: prebuilt-router # Renamed to avoid conflict if myappX uses 'router' internally
+    image: mmarketakis/router-app:1.1
+    container_name: prebuilt-router
     depends_on:
       - broker1
       - broker2

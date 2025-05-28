@@ -197,7 +197,7 @@ public class ConvertToJsonTraining {
 
         // --- Option 2: Convert all files in a folder (Recommended for batch processing) ---
         // IMPORTANT: Replace this with the actual path to your folder containing .csv or .logs files
-//String inputFolderPath = "C:\\kafka_projects\\kafka_1\\DataExamples\\Regression\\TrainingData";
+        //String inputFolderPath = "C:\\kafka_projects\\kafka_1\\DataExamples\\Classification\\TrainingData";
         // You could also get this from a configuration if you set it up:
         // String inputFolderPath = EnvironmentConfiguration.getFilePathForTrainingTopic(); // Assuming this returns a folder path
         String inputFolderPath = EnvironmentConfiguration.getFilePathForTrainingTopic();

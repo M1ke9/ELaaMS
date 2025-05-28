@@ -83,22 +83,22 @@ public class EnsembleAggregatorProcessor implements Processor<String, PartialPre
                 break;
             }
              */
-            /*
+
             if (p.getAlgorithmType().equals(incoming.getAlgorithmType())
                     && p.getHyperParams().equals(incoming.getHyperParams())) {
                 alreadyExists = true;
                 break;
             }
 
-             */
+
 
 
         }
 
-        //if (!alreadyExists) {
+        if (!alreadyExists) {
             list.add(incoming);
             kvStore.put(recordId, list);
-       // }
+       }
 
 // Now if list.size() == requiredCount, do final logic...
 
