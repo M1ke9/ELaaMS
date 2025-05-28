@@ -27,7 +27,7 @@ import java.util.concurrent.ExecutionException;
  This way we achieve generally better distribution,but there's the risk of duplicate creation.
  In case of round robin the creation requests, delete requests are replicated in order to find the corresponding task that holds the microservice.
  */
-public class AggregatorProcessor1 implements Processor<String, ControlStructure, String, MicroServiceInfo> {
+public class ControlProcessorRoundRobin implements Processor<String, ControlStructure, String, MicroServiceInfo> {
     private static final String BOOTSTRAP_SERVERS = EnvironmentConfiguration.getBootstrapServers();
     private static final ConcurrentHashMap<String, GenericMLAlgorithmMicroservice> localMicroMap = new ConcurrentHashMap<>();
 
@@ -38,7 +38,7 @@ public class AggregatorProcessor1 implements Processor<String, ControlStructure,
 
     private final CreateTopic createTopic = new CreateTopic();
 
-    public AggregatorProcessor1(String storeName) {
+    public ControlProcessorRoundRobin(String storeName) {
         this.storeName = storeName;
     }
 

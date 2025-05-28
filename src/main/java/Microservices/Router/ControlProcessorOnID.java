@@ -28,7 +28,7 @@ import java.util.concurrent.ExecutionException;
  *
  * We parse aggregatorBase so we can create the data/pred topics "DataTopic-" or "PredTopic-"
  */
-public class AggregatorProcessorNew implements Processor<String, ControlStructure, String, MicroServiceInfo> {
+public class ControlProcessorOnID implements Processor<String, ControlStructure, String, MicroServiceInfo> {
     private static final ConcurrentHashMap<String, GenericMLAlgorithmMicroservice> localMicroMap = new ConcurrentHashMap<>();
     private static final String DEFAULT_MODEL_PATH = "/models/";
 
@@ -37,7 +37,7 @@ public class AggregatorProcessorNew implements Processor<String, ControlStructur
     private KeyValueStore<String, MicroServiceInfo> store;
     private final CreateTopic createTopic = new CreateTopic();
 
-    public AggregatorProcessorNew(String storeName) {
+    public ControlProcessorOnID(String storeName) {
         this.storeName = storeName;
     }
 

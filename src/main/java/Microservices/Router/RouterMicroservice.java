@@ -176,7 +176,7 @@ public class RouterMicroservice {
                 );
 
         KStream<String, MicroServiceInfo> aggregatorUpdates = withFinalKey.process(
-                () -> new AggregatorProcessorNew(AGGREGATOR_STORE),
+                () -> new ControlProcessorOnID(AGGREGATOR_STORE),
                 AGGREGATOR_STORE
         );
 
@@ -468,8 +468,7 @@ public class RouterMicroservice {
 
      Properties properties = createConfiguration.getPropertiesForMicroservice(MICROSERVICE_ID, BOOTSTRAP_SERVERS);
 
-        //.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG,EnvironmentConfiguration.giveTheParallelDegree());  // Match partition count
-        properties.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG,6);
+        properties.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG,EnvironmentConfiguration.giveTheParallelDegree());  // Match partition count
        // properties.put(StreamsConfig.APPLICATION_ID_CONFIG, "RouterMicroservice");
 
       //  properties.put(StreamsConfig.STATE_DIR_CONFIG, "C:/dataset/tmp/kafka-streams");
