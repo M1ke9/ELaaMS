@@ -84,14 +84,106 @@ BOOTSTRAP_SERVERS = broker1:9092,broker2:9092,broker3:9092
 
 | ID | Algorithm Type | Task Type(s) | Key Hyperparameters |
 |:---|:---------------|:-------------|:--------------------|
-| 1 | HoeffdingTree | Classification | `gracePeriod`, `splitConfidence`, `tieThreshold` |
-| 2 | Naive-Bayes | Classification | `RandomSeed` |
-| 3 | kNN | Classification, Regression | `k`, `nearestNeighbourSearchOption`, `limitOption` |
-| 4 | Random-Forest | Classification | `ensembleSize`, `numberOfJobs`, `treeLearner`, `mFeaturesPerTreeSize` |
-| 5 | Perceptron | Classification, Regression | `learningRatio` |
-| 6 | HoeffdingAdaptiveTree | Classification | `gracePeriod`, `splitConfidence`, `tieThreshold` |
-| 7 | SGD | Classification, Regression | `learningRate`, `lossFunctionOption`, `lambdaRegularization` |
-| 8 | FIMT-DD | Regression | `splitConfidence`, `gracePeriod`, `tieThreshold`, `learningRatio` |
-| 9 | AMRules | Regression | `gracePeriod`, `splitConfidence`, `tieThreshold` |
+| 1 | HoeffdingTree  | Classification | `gracePeriod`, `splitConfidence`, `tieThreshold` |
+| 2 | Naive-Bayes    | Classification | `RandomSeed` |
+| 3 | kNN            | Classification, Regression | `k`, `nearestNeighbourSearchOption`, `limitOption` |
+| 4 | Random-Forest  | Classification | `ensembleSize`, `numberOfJobs`, `treeLearner`, `mFeaturesPerTreeSize` |
+| 5 | Perceptron     | Classification, Regression | `learningRatio` |
+| 6 | HAT            | Classification | `gracePeriod`, `splitConfidence`, `tieThreshold` |
+| 7 | SGD            | Classification, Regression | `learningRate`, `lossFunctionOption`, `lambdaRegularization` |
+| 8 | FIMT-DD        | Regression | `splitConfidence`, `gracePeriod`, `tieThreshold`, `learningRatio` |
+| 9 | AMRules        | Regression | `gracePeriod`, `splitConfidence`, `tieThreshold` |
 
 
+## User Interface Application
+
+## System Interaction: Control Requests
+
+The ELaaMS application provides a user-friendly environment designed for accessible operation without requiring specialized skills. Interaction with the system is primarily conducted through structured JSON Requests. These requests define the specific actions and data involved in each system operation.
+
+The structure of these JSON Requests includes the following standard fields:
+
+* **`commandType`** (*String*): Specifies the type of operation requested from the system (e.g., `Create`, `Delete`, `Load` an algorithm instance).
+* **`algorithmID`** (*Integer*): A unique numerical identifier assigned to the specific machine learning algorithm to be used for the task.
+* **`algorithmType`** (*String*): Indicates the general category or name of the chosen algorithm implementation.
+* **`streamID`** (*String*): Identifies the particular data stream instance that the deployed algorithm microservice should consume data from (e.g., a stock name like `EURTRY`).
+* **`dataSetKey`** (*String*): Specifies the source from which the `streamID` originates (e.g., `Forex` for a stock market dataset).
+* **`hyperParams`** (*Object*): A nested JSON object functioning as a key-value map to configure the specific hyperparameters required by the selected algorithm.
+* **`target`** (*String*): Defines the name of the variable within the data stream that the algorithm is intended to predict (e.g., `'price'`).
+* **`taskType`** (*String*): Specifies whether the requested machine learning task is `Classification` or `Regression`.
+
+**Example Create Request:**
+
+To deploy a microservice running a FIMT-DD (Fast Incremental Model Trees with Drift Detection) algorithm configured for `EURTRY` stock data from the `Forex` market, specifically targeting the `'price'` variable, the following JSON request would be used:
+
+```json
+{
+  "commandType": "Create",
+  "algorithmID": 8,
+  "algorithmType": "FIMT-DD",
+  "streamID": "EURTRY",
+  "dataSetKey": "Forex",
+  "hyperParams": {
+    "gracePeriod": 500,
+    "splitConfidence": 0.05,
+    "learningRatioO": 0.001,
+    "tieThresholdOption": 0.2
+  },
+  "target": "price",
+  "taskType": "Regression"
+}
+```
+**Example Delete Request:**
+The following command stops and deletes from the system an existing ML model microservice which is currently running.
+In the example below we demonstrate how a kNN microservice is stopped within ELaaMS.
+It is  important to configure all other fields of the request(used in the creation), cause it could be more than one kNN microservices running (eg., with different parameters, on different target on that specific data scope or even on different data scope )
+```json
+{
+  "commandType": "Delete",
+  "algorithmID": 3,
+  "algorithmType": "kNN",
+  "streamID": "AegeanShips",
+  "dataSetKey": "Ships",
+  "hyperParams": {
+    "k": 5
+  },
+  "target": "status",
+  "taskType": "Classification"
+}
+```
+
+## Data Tuple Structure
+
+The data tuples processed by ELaaMS are structured to accommodate various datasets while maintaining a consistent format. Each tuple contains the following key attributes:
+
+* **`streamID`** (*String*): A unique identifier specifying the particular data stream instance from which the data originates.
+* **`dataSetKey`** (*String*): Represents the source or dataset to which the `streamID` belongs.
+* **`recordID`** (*String*): A unique identifier for the individual data record represented by the tuple.
+* **`fields`** (*Map<String, Object>*): A flexible key-value map containing all the feature attributes of the data instance. All features provided in the dataset are included here. The deployed machine learning models dynamically identify relevant features and the designated target variable based on the initial request configuration.
+
+**Note on `recordID`:** For training data tuples, the `recordID` field is optional and can be left as an empty string. However, for prediction data specifically intended for ensemble grouping, the `recordID` field is mandatory and must contain a unique identifier (typically a UUID).
+
+### Example Training Data Tuple:
+For a dataset with features like `price`, `day`, `hour`, `minute`, `second`, `dayofweek`, a corresponding training data tuple would be represented as:
+
+```json
+{
+  "streamID": "EURTRY",
+  "dataSetKey": "Forex",
+  "recordID": "",
+  "fields": {
+    "price": 6.24146,
+    "day": 11,
+    "hour": 0,
+    "minute": 0,
+    "second": 1,
+    "dayofweek": 4
+  }
+}
+```
+## Data Producers
+
+The ELaaMS application provides flexibility in data ingestion by offering two distinct types of producers, designed to handle various deployment and performance needs:
+
+* **Single Instance, Multi-threaded Producer:** This producer type is suitable for scenarios where a single application instance generates data, utilizing multiple internal threads to achieve concurrent message production.
+* **Multi-Instance, Multi-threaded Producer:** This advanced producer configuration is ideal for highly distributed environments. It allows multiple application instances, each potentially running with its own multi-threaded producer, to generate data in parallel, maximizing throughput and scalability.
