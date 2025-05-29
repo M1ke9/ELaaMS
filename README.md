@@ -283,7 +283,7 @@ Once the Kafka cluster is running, you can start the ELaaMS microservices and pr
 
 * **Windows:**
     ```bash
-    java -DconfigFilePath=.\Configuration\config.properties -jar target\ELaaMS-app-jar-with-dependencies.jar
+    java -DconfigFilePath=.\Configuration\config.properties -jar target/ELaaMS-app-jar-with-dependencies.jar
     ```
 * **Linux/macOS:**
     ```bash
