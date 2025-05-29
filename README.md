@@ -134,6 +134,7 @@ To deploy a microservice running a FIMT-DD (Fast Incremental Model Trees with Dr
 }
 ```
 **Example Delete Request:**
+
 The following command stops and deletes from the system an existing ML model microservice which is currently running.
 In the example below we demonstrate how a kNN microservice is stopped within ELaaMS.
 It is  important to configure all other fields of the request(used in the creation), cause it could be more than one kNN microservices running (eg., with different parameters, on different target on that specific data scope or even on different data scope )
@@ -187,3 +188,51 @@ The ELaaMS application provides flexibility in data ingestion by offering two di
 
 * **Single Instance, Multi-threaded Producer:** This producer type is suitable for scenarios where a single application instance generates data, utilizing multiple internal threads to achieve concurrent message production.
 * **Multi-Instance, Multi-threaded Producer:** This advanced producer configuration is ideal for highly distributed environments. It allows multiple application instances, each potentially running with its own multi-threaded producer, to generate data in parallel, maximizing throughput and scalability.
+
+## Ensemble Output Structure
+
+For a comprehensive view of ensemble results, each output tuple is published to a dedicated Kafka topic. The topic name varies based on the ensemble task type:
+
+* **Single-stream ensemble:** `OutputTopicForData-<streamID>-<dataSetKey>-<target>`
+* **Multi-stream/dataset ensemble:** `OutputTopicForData-<dataSetKey>-<target>`
+
+Each ensemble output tuple provides a detailed overview of the aggregated prediction and individual model contributions:
+
+* **`recordId`** (*String*): A unique identifier for the data record.
+* **`finalPrediction`** (*String*): The final, aggregated prediction from the ensemble (e.g., through majority voting or averaging).
+* **`partialPredictions`** (*Array of Objects*): A list containing individual predictions from each contributing ML microservice. Each object in this array includes:
+   * `algorithmType` (*String*): The type of algorithm that made the prediction.
+   * `prediction` (*String*): The prediction value from that specific algorithm.
+   * `hyperParams` (*String*): A string representation of the hyperparameters used by that algorithm for its prediction.
+
+**Example Ensemble Output Tuple:**
+
+Below is an illustration of an ensemble tuple from a multi-class classification task involving four distinct ML microservices:
+
+```json
+{
+  "recordId": "c0f98c53-b7bc-4abb-bfa3-e00cc6d91067",
+  "finalPrediction": "13",
+  "partialPredictions": [
+    {
+      "algorithmType": "HoeffdingTree",
+      "prediction": "13",
+      "hyperParams": "{gracePeriod=200, splitConfidence=0.01, tieThresholdOption=0.05}"
+    },
+    {
+      "algorithmType": "kNN",
+      "prediction": "7",
+      "hyperParams": "{k=5}"
+    },
+    {
+      "algorithmType": "kNN",
+      "prediction": "11",
+      "hyperParams": "{k=10}"
+    },
+    {
+      "algorithmType": "Random-Forest",
+      "prediction": "13",
+      "hyperParams": "{ensembleSize=3}"
+    }
+  ]
+}
