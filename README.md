@@ -191,7 +191,7 @@ The ELaaMS application provides flexibility in data ingestion by offering two di
 
 ## Ensemble Output Structure
 
-For a comprehensive view of ensemble results, each output tuple is published to a dedicated Kafka topic. The topic name varies based on the ensemble task type:
+For a comprehensive view of ensemble results, each output tuple is published to a dedicated Kafka topic. The topic name varies based on the **data scope** for a particular ensemble task:
 
 * **Single-stream ensemble:** `OutputTopicForData-<streamID>-<dataSetKey>-<target>`
 * **Multi-stream/dataset ensemble:** `OutputTopicForData-<dataSetKey>-<target>`
@@ -236,3 +236,57 @@ Below is an illustration of an ensemble tuple from a multi-class classification 
     }
   ]
 }
+```
+## Getting Started
+### Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+* **Java Development Kit (JDK):** Version 17
+* **Apache Maven:** Version 3.9.3 (or a compatible newer version)
+* **Git:** For cloning the repository
+* **Docker & Docker Compose:** For running the Kafka cluster
+
+The project was developed and tested on the following versions, but it could also work on other compatible versions.
+
+
+## How to Execute ELaaMS:
+
+### Step 1: Clone the Repository
+
+
+First, clone the project repository to your local machine:
+
+```bash
+git clone https://github.com/M1ke9/ELaaMS.git
+```
+
+### Step 2: Build the Project
+```bash
+mvn clean package
+```
+### Step 3: Start the Kafka Cluster
+```bash
+docker-compose up -d broker1 broke2 broker3
+```
+### Step 4: Create the necessary input topics
+A docker container would initialize all input topics for the application to run properly.
+```bash
+docker-compose up -d kafka-setup
+```
+
+### Step 4: Run the ELaaMS JAR
+
+Once the Kafka cluster is running, you can start the ELaaMS microservices and producers. Ensure your configuration files (e.g., `config.properties`) are placed in a `Configuration/` directory at the project root.
+
+#### Router Microservice
+
+* **Windows:**
+    ```bash
+    java -DconfigFilePath=.\Configuration\config.properties -jar target\ELaaMS-app-jar-with-dependencies.jar
+    ```
+* **Linux/macOS:**
+    ```bash
+    java -DconfigFilePath=./Configuration/config.properties -jar target/ELaaMS-app-jar-with-dependencies.jar
+    ```
+The -DconfigFilePath isn't the exact path of the config.properties file, but it is an example. The user can set the path of the config.properties file according to the location of the file in the computer
