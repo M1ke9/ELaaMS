@@ -10,7 +10,7 @@ import java.util.Properties;
 
 public class EnvironmentConfiguration {
     private static final Properties properties = new Properties();
-    private static final String Default_Location_DIR_PATH = "C:\\kafka_projects\\kafka_1\\Configuration\\configWindows.properties";
+    private static final String Default_Location_DIR_PATH = "C:\\kafka_projects\\kafka_1\\Configuration\\config.properties";
 
     static {
         String final_Location_Path = System.getProperty("configFilePath");
