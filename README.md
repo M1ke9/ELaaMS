@@ -205,7 +205,7 @@ Each ensemble output tuple provides a detailed overview of the aggregated predic
    * `prediction` (*String*): The prediction value from that specific algorithm.
    * `hyperParams` (*String*): A string representation of the hyperparameters used by that algorithm for its prediction.
 
-**Example Ensemble Output Tuple:**
+### Example Ensemble Output Tuple:
 
 Below is an illustration of an ensemble tuple from a multi-class classification task involving four distinct ML microservices:
 
