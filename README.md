@@ -298,7 +298,7 @@ If you prefer to create the topics manually (e.g., for debugging or specific con
     ./kafka-topics.sh --bootstrap-server localhost:29092 --create --topic active-microservices --partitions 1 --replication-factor 3
     ./kafka-topics.sh --bootstrap-server localhost:29092 --create --topic model-updates-topic --partitions 1 --replication-factor 3
     ```
-### Step 4: Run the ELaaMS JAR
+### Step 5: Run the ELaaMS JAR
 
 Once the Kafka cluster is running, you can start the ELaaMS microservices and producers. Ensure your configuration files (e.g., `config.properties`) are placed in a `Configuration/` directory at the project root.
 
