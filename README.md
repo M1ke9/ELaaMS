@@ -343,10 +343,10 @@ This annex provides detailed instructions on how to use the two Java application
 The project offers two dedicated Java applications to streamline data ingestion. These applications can transform raw input from various sources (CSV, .logs, or TXT files) into a standardized JSON format, adhering to the project's specific data structure.
 
 The generated JSON files are then utilized to produce messages for two distinct Kafka topics:
-* **Training messages:** Directed to the designated Kafka training topic.
-* **Prediction messages:** Directed to the designated Kafka prediction topic.
+* **Training tuples:** Directed to the designated Kafka training topic.
+* **Prediction tuples:** Directed to the designated Kafka prediction topic.
 
-**Important Distinction:** Please note that the training data, after transformation, will **not include a UUID (Record ID)** for each data tuple. The UUID is specifically added only for prediction messages.
+**Important Distinction:** Please note that the training data, after transformation, will **not include a UUID (Record ID)** for each data tuple. The UUID is specifically added only for prediction tuples.
 
 ### Step 1: Prepare Input Data Files and Naming Convention
 
@@ -367,8 +367,9 @@ Where:
 
 ### Step 2: Data Preparation for Machine Learning
 
-All input data provided in your files (after transformation to JSON) will be utilized as features for the deployed machine learning algorithm. It is the user's responsibility to ensure that this data is appropriately prepared and ready for ML processing.
+All input data provided in your files (after transformation to JSON) will be utilized as features for the deployed machine learning algorithm(s). It is the user's responsibility to ensure that this data is appropriately prepared and ready for ML processing.
 
+**Target Variable Note:** In prediction data, the target variable can be included to activate an evaluation service. Regardless of its presence, the model will always treat it as missing for the actual prediction. The specific target variable for a given task is defined in the "Create" request.
 
 ### Step 3: Run the Data Transformation Scripts
 
