@@ -240,8 +240,6 @@ Below is an illustration of an ensemble tuple from a multi-class classification 
 ## Getting Started
 ### Prerequisites
 
-Before you begin, ensure you have the following installed:
-
 * **Java Development Kit (JDK):** Version 17
 * **Apache Maven:** Version 3.9.6 
 * **Apache Kafka & Kafka Streams:** Version 3.7.1
