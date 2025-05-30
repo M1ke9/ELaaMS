@@ -333,19 +333,26 @@ The -DconfigFilePath isn't the exact path of the config.properties file, but it 
     ```bash
     java -DconfigFilePath=./Configuration/config.properties -jar target/data-producer-app-jar-with-dependencies.jar
     ```
-    
-## Annex 1: How to use transform data scripts
 
-### Data Ingestion and Transformation
+## Annex 1: How to Use Data Transformation Scripts
 
-The project provides two dedicated Java applications to streamline data ingestion. These applications can transform raw input from various sources (CSV, .logs, or TXT files) into a standardized JSON format, adhering to the project's specific data structure.
+This annex provides detailed instructions on how to use the two Java applications designed for transforming raw data files into the specific JSON format required by the ELaaMS project.
 
-The generated JSON files are then utilized to produce:
+### Data Ingestion and Transformation Overview
+
+The project offers two dedicated Java applications to streamline data ingestion. These applications can transform raw input from various sources (CSV, .logs, or TXT files) into a standardized JSON format, adhering to the project's specific data structure.
+
+The generated JSON files are then utilized to produce messages for two distinct Kafka topics:
 * **Training messages:** Directed to the designated Kafka training topic.
 * **Prediction messages:** Directed to the designated Kafka prediction topic.
 
-With the only difference that training data would not include a UUID for each data tuple.
-### Step 1: Must have a (CSV, .logs, or TXT file) file with the following file name format:
+**Important Distinction:** Please note that the training data, after transformation, will **not include a UUID (Record ID)** for each data tuple. The UUID is specifically added only for prediction messages.
+
+### Step 1: Prepare Input Data Files and Naming Convention
+
+To be processed by the JSON conversion applications, your raw input files (CSV, .logs, or TXT) must adhere to a specific naming convention:
+
+The file name should follow this format:
 ```bash
 <streamID>-<datasetKey>.<extension>
 ```
@@ -357,3 +364,23 @@ Where:
 **Examples of valid file names:**
 * `AegeanShips-Ships.logs`
 * `EURTRY-Forex.csv`
+
+### Step 2: Data Preparation for Machine Learning
+
+All input data provided in your files (after transformation to JSON) will be utilized as features for the deployed machine learning algorithm. It is the user's responsibility to ensure that this data is appropriately prepared and ready for ML processing.
+
+
+### Step 3: Run the Data Transformation Scripts
+
+Execute the following commands to run the JSON conversion applications. Ensure you have the `config.properties` file correctly set up in the `Configuration` directory, specifying the paths to your training and prediction data folders.
+
+* **Windows:**
+    ```bash
+    java -DconfigFilePath=.\Configuration\config.properties -jar target/convert-to-json-training-app-jar-with-dependencies.jar
+    java -DconfigFilePath=.\Configuration\config.properties -jar target/convert-to-json-prediction-app-jar-with-dependencies.jar
+    ```
+* **Linux/macOS:**
+    ```bash
+    java -DconfigFilePath=./Configuration/config.properties -jar target/convert-to-json-training-app-jar-with-dependencies.jar
+    java -DconfigFilePath=./Configuration/config.properties -jar target/convert-to-json-prediction-app-jar-with-dependencies.jar
+    ```
