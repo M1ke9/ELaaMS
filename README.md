@@ -334,6 +334,26 @@ The -DconfigFilePath isn't the exact path of the config.properties file, but it 
     java -DconfigFilePath=./Configuration/config.properties -jar target/data-producer-app-jar-with-dependencies.jar
     ```
     
-## Annex 1: How to use transform data script
+## Annex 1: How to use transform data scripts
 
-The Transform-TXT-Data-To-Json.jar is a Java application that can be used to transform a CSV file to a JSON file. The JSON file can be used to produce data messages to the Data Kafka topic in SaaMS
+### Data Ingestion and Transformation
+
+The project provides two dedicated Java applications to streamline data ingestion. These applications can transform raw input from various sources (CSV, .logs, or TXT files) into a standardized JSON format, adhering to the project's specific data structure.
+
+The generated JSON files are then utilized to produce:
+* **Training messages:** Directed to the designated Kafka training topic.
+* **Prediction messages:** Directed to the designated Kafka prediction topic.
+
+With the only difference that training data would not include a UUID for each data tuple.
+### Step 1: Must have a (CSV, .logs, or TXT file) file with the following file name format:
+```bash
+<streamID>-<datasetKey>.<extension>
+```
+Where:
+* `<streamID>`: Represents the type of data stream (e.g., `AegeanShips`, `EURTRY`). This part of the filename will be extracted and used as the `streamID` field in the resulting JSON data.
+* `<datasetKey>`: A unique identifier for the specific dataset within that stream (e.g., `Ships`, `Forex`). This will be extracted and used as the `dataSetKey` field in the resulting JSON data.
+* `<extension>`: The file extension, which must be one of `.csv`, `.logs`, or `.txt`.
+
+**Examples of valid file names:**
+* `AegeanShips-Ships.logs`
+* `EURTRY-Forex.csv`
