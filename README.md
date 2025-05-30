@@ -268,7 +268,7 @@ mvn clean package
 ```bash
 docker-compose up -d broker1 broke2 broker3
 ```
-### 4. Create Kafka Topics
+### Step 4: Create Kafka Topics
 
 The ELaaMS application requires several Kafka topics for its operation. You have two options to create them:
 
