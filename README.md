@@ -243,7 +243,8 @@ Below is an illustration of an ensemble tuple from a multi-class classification 
 Before you begin, ensure you have the following installed:
 
 * **Java Development Kit (JDK):** Version 17
-* **Apache Maven:** Version 3.9.3 (or a compatible newer version)
+* **Apache Maven:** Version 3.9.6 
+* **Apache Kafka & Kafka Streams:** Version 3.7.1
 * **Git:** For cloning the repository
 * **Docker & Docker Compose:** For running the Kafka cluster
 
@@ -269,12 +270,36 @@ mvn clean package
 ```bash
 docker-compose up -d broker1 broke2 broker3
 ```
-### Step 4: Create the necessary input topics
-A docker container would initialize all input topics for the application to run properly.
+### 4. Create Kafka Topics
+
+The ELaaMS application requires several Kafka topics for its operation. You have two options to create them:
+
+#### Option 1: Using the `kafka-setup` Docker Service (Recommended)
+
+The `docker-compose.yml` includes a dedicated `kafka-setup` service designed to automatically create all required input topics when it starts. This is the simplest and recommended method.
+
 ```bash
 docker-compose up -d kafka-setup
 ```
+#### Option 2: Manually from the Command Line
 
+If you prefer to create the topics manually (e.g., for debugging or specific configurations), you can execute the `kafka-topics.sh` commands directly within one of the Kafka broker containers.
+
+1.  Access the shell of a Kafka broker container.
+
+    ```bash
+    docker exec --workdir /opt/kafka/bin/ -it broker1 sh
+    ```
+
+2.  Once inside the container's shell, run the following commands to create each topic:
+
+    ```bash
+    ./kafka-topics.sh --bootstrap-server localhost:29092 --create --topic control-topic --partitions 8 --replication-factor 3
+    ./kafka-topics.sh --bootstrap-server localhost:29092 --create --topic training-topic --partitions 8 --replication-factor 3
+    ./kafka-topics.sh --bootstrap-server localhost:29092 --create --topic prediction-topic --partitions 8 --replication-factor 3
+    ./kafka-topics.sh --bootstrap-server localhost:29092 --create --topic active-microservices --partitions 1 --replication-factor 3
+    ./kafka-topics.sh --bootstrap-server localhost:29092 --create --topic model-updates-topic --partitions 1 --replication-factor 3
+    ```
 ### Step 4: Run the ELaaMS JAR
 
 Once the Kafka cluster is running, you can start the ELaaMS microservices and producers. Ensure your configuration files (e.g., `config.properties`) are placed in a `Configuration/` directory at the project root.
