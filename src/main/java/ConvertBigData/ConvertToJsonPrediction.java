@@ -185,7 +185,7 @@ public class ConvertToJsonPrediction {
 
     public static void main(String[] args) throws IOException {
         // --- Option 1: Convert a single file (for testing individual files) ---
-        // String singleFilePath = "C:\\kafka_projects\\kafka_1\\DataExamples\\TrainingData\\AegeanShips-Ships.logs";
+        // String singleFilePath = "C:\\kafka_projects\\kafka_1\\DataExamples\\TrainingData\\AegeanShips-Ships.csv";
         // try {
         //     convertSingleFileToJson(singleFilePath);
         // } catch (Exception e) {

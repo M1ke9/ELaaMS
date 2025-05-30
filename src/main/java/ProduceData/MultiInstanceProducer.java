@@ -1,5 +1,7 @@
 package ProduceData;
 
+import Configuration.EnvironmentConfiguration;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
@@ -18,8 +20,10 @@ public class MultiInstanceProducer {
     private static final int NUM_PARTITIONS = 4;
 
     // Folder paths:
-    private static final String TRAINING_FOLDER   = "C:\\kafka_projects\\kafka_1\\Dataset\\TrainingData";
-    private static final String PREDICTION_FOLDER = "C:\\kafka_projects\\kafka_1\\Dataset\\PredictionData";
+   // private static final String TRAINING_FOLDER   = "C:\\kafka_projects\\kafka_1\\Dataset\\TrainingData";
+   // private static final String PREDICTION_FOLDER = "C:\\kafka_projects\\kafka_1\\Dataset\\PredictionData";
+    private static final String TRAINING_FOLDER   = EnvironmentConfiguration.getFilePathForTrainingTopic();
+    private static final String PREDICTION_FOLDER = EnvironmentConfiguration.getFilePathForPredictionTopic();
 
     public static void main(String[] args) {
         // 1) Collect JSON files from TrainingData folder

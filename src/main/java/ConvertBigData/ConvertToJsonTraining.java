@@ -187,7 +187,7 @@ public class ConvertToJsonTraining {
 
     public static void main(String[] args) throws IOException {
         // --- Option 1: Convert a single file (for testing individual files) ---
-        // String singleFilePath = "C:\\kafka_projects\\kafka_1\\DataExamples\\TrainingData\\AegeanShips-Ships.logs";
+        // String singleFilePath = "C:\\kafka_projects\\kafka_1\\DataExamples\\TrainingData\\AegeanShips-Ships.csv";
         // try {
         //     convertSingleFileToJson(singleFilePath);
         // } catch (Exception e) {
@@ -197,10 +197,10 @@ public class ConvertToJsonTraining {
 
         // --- Option 2: Convert all files in a folder (Recommended for batch processing) ---
         // IMPORTANT: Replace this with the actual path to your folder containing .csv or .logs files
-        //String inputFolderPath = "C:\\kafka_projects\\kafka_1\\DataExamples\\Classification\\TrainingData";
+        String inputFolderPath = "C:\\kafka_projects\\kafka_1\\DataExamples\\Classification\\TrainingData";
         // You could also get this from a configuration if you set it up:
         // String inputFolderPath = EnvironmentConfiguration.getFilePathForTrainingTopic(); // Assuming this returns a folder path
-        String inputFolderPath = EnvironmentConfiguration.getFilePathForTrainingTopic();
+       // String inputFolderPath = EnvironmentConfiguration.getFilePathForTrainingTopic();
         convertFolderToJson(inputFolderPath);
     }
 }

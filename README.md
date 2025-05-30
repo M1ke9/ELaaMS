@@ -302,7 +302,6 @@ If you prefer to create the topics manually (e.g., for debugging or specific con
 
 Once the Kafka cluster is running, you can start the ELaaMS microservices and producers. Ensure your configuration files (e.g., `config.properties`) are placed in a `Configuration/` directory at the project root.
 
-#### Router Microservice
 
 * **Windows:**
     ```bash
@@ -312,4 +311,26 @@ Once the Kafka cluster is running, you can start the ELaaMS microservices and pr
     ```bash
     java -DconfigFilePath=./Configuration/config.properties -jar target/ELaaMS-app-jar-with-dependencies.jar
     ```
-The -DconfigFilePath isn't the exact path of the config.properties file, but it is an example. The user can set the path of the config.properties file according to the location of the file in the computer
+The -DconfigFilePath isn't the exact path of the config.properties file, but it is an example. The user can set the path of the config.properties file according to the location of the file in the computer.
+### Step 6: Run the User Interface JAR
+#### Control Producer
+
+* **Windows:**
+    ```bash
+    java -DconfigFilePath=.\Configuration\config.properties -jar target/control-producer-app-jar-with-dependencies.jar
+    ```
+* **Linux/macOS:**
+    ```bash
+    java -DconfigFilePath=./Configuration/config.properties -jar target/control-producer-app-jar-with-dependencies.jar
+    ```
+#### Data Producer (Training & Prediction Data)
+
+* **Windows:**
+    ```bash
+    java -DconfigFilePath=.\Configuration\config.properties -jar target/data-producer-app-jar-with-dependencies.jar
+    ```
+* **Linux/macOS:**
+    ```bash
+    java -DconfigFilePath=./Configuration/config.properties -jar target/data-producer-app-jar-with-dependencies.jar
+    ```
+    
