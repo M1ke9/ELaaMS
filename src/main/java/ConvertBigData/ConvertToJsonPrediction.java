@@ -121,7 +121,7 @@ public class ConvertToJsonPrediction {
         try (Stream<Path> paths = Files.walk(dir)) {
             List<Path> eligibleFiles = paths
                     .filter(Files::isRegularFile) // Only consider regular files
-                    .filter(p -> p.toString().toLowerCase().endsWith(".csv") || p.toString().toLowerCase().endsWith(".logs")) // Filter for .csv or .logs
+                    .filter(p -> p.toString().toLowerCase().endsWith(".csv") || p.toString().toLowerCase().endsWith(".logs") || p.toString().toLowerCase().endsWith(".txt")) // Filter for .csv or .logs
                     .toList(); // Collect to a list to avoid issues with stream closure if an exception occurs during conversion
 
             if (eligibleFiles.isEmpty()) {

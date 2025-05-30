@@ -224,6 +224,38 @@
                         </configuration>
                     </execution>
 
+                    <execution>
+                        <id>convert-to-json-prediction-jar</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>convert-to-json-prediction-app</finalName> <descriptorRefs>
+                            <descriptorRef>jar-with-dependencies</descriptorRef> </descriptorRefs>
+                            <archive>
+                                <manifest>
+                                    <mainClass>ConvertBigData.ConvertToJsonPrediction</mainClass> </manifest>
+                            </archive>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>convert-to-json-training-jar</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>convert-to-json-training-app</finalName> <descriptorRefs>
+                            <descriptorRef>jar-with-dependencies</descriptorRef> </descriptorRefs>
+                            <archive>
+                                <manifest>
+                                    <mainClass>ConvertBigData.ConvertToJsonTraining</mainClass> </manifest>
+                            </archive>
+                        </configuration>
+                    </execution>
+
                 </executions>
             </plugin>
         </plugins>

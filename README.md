@@ -334,3 +334,6 @@ The -DconfigFilePath isn't the exact path of the config.properties file, but it 
     java -DconfigFilePath=./Configuration/config.properties -jar target/data-producer-app-jar-with-dependencies.jar
     ```
     
+## Annex 1: How to use transform data script
+
+The Transform-TXT-Data-To-Json.jar is a Java application that can be used to transform a CSV file to a JSON file. The JSON file can be used to produce data messages to the Data Kafka topic in SaaMS
