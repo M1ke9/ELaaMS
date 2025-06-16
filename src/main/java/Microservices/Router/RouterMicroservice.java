@@ -116,7 +116,8 @@ public class RouterMicroservice {
         );
 
 
-/*
+        /*
+
         KStream<String, ControlStructure> broadcasted = originalControl
                // .selectKey((oldKey, record) -> record.getStreamID()+ "-" +record.getDataSetKey())
                 .selectKey((oldKey, command) -> {
@@ -153,12 +154,17 @@ public class RouterMicroservice {
 
 // (C) aggregator transform -> aggregatorUpdates
         KStream<String, MicroServiceInfo> aggregatorUpdates = controlStream
-                .process(() -> new AggregatorProcessor1(AGGREGATOR_STORE), AGGREGATOR_STORE);
+                .process(() -> new ControlProcessorRoundRobin(AGGREGATOR_STORE), AGGREGATOR_STORE);
 
 
 
 
- */
+
+         */
+
+
+
+
 
 
 
@@ -182,12 +188,19 @@ public class RouterMicroservice {
 
 
 
+
+
+
+
         KTable<String, MicroServiceInfo> algorithmMicroserviceTable = aggregatorUpdates
+
                 .selectKey((oldKey, command) -> {
                    int idx = oldKey.indexOf("___");
                     if (idx < 0) return oldKey;  // no delimiter => entire storeKey is aggregatorBase
                    return oldKey.substring(0, idx);
                 })
+
+
                 .groupByKey(Grouped.with(Serdes.String(), microserviceInfoSerde))
                 .aggregate(
                         () -> new MicroServiceInfo(),
@@ -224,6 +237,15 @@ public class RouterMicroservice {
                                     }
                                 }
                             }
+
+                            if (FullState.getAllMicroservices().isEmpty()) {
+
+                                System.out.println("All microservices removed for aggregatorKey: " + aggregatorKey + ". Deleting entry.");
+
+                                return null;
+                            }
+
+
 
 
 /*
@@ -288,17 +310,17 @@ public class RouterMicroservice {
                                 // If we have at least 2 microservices => start aggregator (or update it)
                                 if (countForTarget >= 2) {
                                     if (aggregatorForTarget == null) {
-                                        aggregatorForTarget = new EnsembleAggregatorMicroservice(aggregatorKey,target,taskType, countForTarget);
+                                        createTopic.createTopicsForStreamIdAndTargetIfNotExists(OUTPUT_TOPIC,aggregatorKey,target);
+                                        aggregatorForTarget = new EnsembleAggregatorMicroservice(aggregatorKey,target,taskType);
                                         aggregatorForTarget.cleanUp();
                                         aggregatorForTarget.start();
                                         aggregatorMap.put(EnsembleAggregatorKey, aggregatorForTarget);
                                         System.out.printf("Started aggregator for %s (target=%s) with count=%d\n",
                                                 aggregatorKey, target, countForTarget);
 
-                                        createTopic.createTopicsForStreamIdAndTargetIfNotExists(OUTPUT_TOPIC,aggregatorKey,target);
                                     } else {
-                                        aggregatorForTarget.updateCount(countForTarget);
-                                        System.out.printf("Updated aggregator membership => streamId=%s, target=%s, count=%d\n",
+                                        //aggregatorForTarget.updateCount(countForTarget);
+                                        System.out.printf("Updated aggregator membership => {StreamID-dataSetKey} = %s, target=%s, count=%d\n",
                                                 aggregatorKey, target, countForTarget);
                                     }
                                 } else {
@@ -468,7 +490,7 @@ public class RouterMicroservice {
 
      Properties properties = createConfiguration.getPropertiesForMicroservice(MICROSERVICE_ID, BOOTSTRAP_SERVERS);
 
-        properties.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG,EnvironmentConfiguration.giveTheParallelDegree());  // Match partition count
+        properties.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG,EnvironmentConfiguration.giveTheDivideParallelDegree());  // Match partition count
        // properties.put(StreamsConfig.APPLICATION_ID_CONFIG, "RouterMicroservice");
 
       //  properties.put(StreamsConfig.STATE_DIR_CONFIG, "C:/dataset/tmp/kafka-streams");

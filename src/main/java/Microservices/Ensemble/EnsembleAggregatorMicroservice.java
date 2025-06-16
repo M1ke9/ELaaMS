@@ -1,17 +1,17 @@
 package Microservices.Ensemble;
 
-
+import Configuration.EnvironmentConfiguration;
 import Evaluation.ClassificationEvaluationService;
 import Evaluation.RegressionEvaluationService;
+import Microservices.Router.MicroServiceInfo;
+import Serdes.Init.ListOfPartialPredictionSerde;
 import Structure.EnsembleResult;
 import Structure.PartialPrediction;
 import Serdes.GeneralFormat.GeneralSerde;
-import Serdes.Init.ListOfPartialPredictionSerde;
-
-import helperClasses.DynamicCountHolder;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.state.*;
@@ -22,164 +22,141 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * A standalone microservice that aggregates partial predictions (e.g., from 3 algorithms)
- * into a final EnsembleResult. It listens on 'EnsembleTopicForData-<streamId>' and writes
- * final results to 'OutputTopicForData-<streamId>'.
+ * A standalone microservice that aggregates partial predictions into a final EnsembleResult.
+ * It is state-aware and reacts to changes in the set of active algorithms for its group.
  */
 public class EnsembleAggregatorMicroservice {
     private final String streamId;
-    private  Long expectedNumOfAlgorithms;  // e.g. 3
+    private final String target;
+    private final String taskType;
+
     private KafkaStreams streams;
     private final AtomicLong totalRecordsProcessed;
     private long startTime;
     private long lastLogTime;
 
-    private String taskType;
-
-    String target;
-
-    private final DynamicCountHolder countHolder;
-    public EnsembleAggregatorMicroservice(String streamId,String target,String taskType, Long initialCount) {
+    /**
+     * Constructor for the state-aware ensemble aggregator.
+     * @param streamId The data scope key (e.g., "AegeanShips-Ships").
+     * @param target The target variable for this ensemble (e.g., "status").
+     * @param taskType The type of ML task ("Classification" or "Regression").
+     */
+    public EnsembleAggregatorMicroservice(String streamId, String target, String taskType) {
         this.streamId = streamId;
-       // this.expectedNumOfAlgorithms = expectedNumOfAlgorithms;
-        totalRecordsProcessed = new AtomicLong(0);
-        this.countHolder = new DynamicCountHolder();
-        this.countHolder.set(initialCount);
-        this.target=target;
-        this.taskType=taskType;
+        this.target = target;
+        this.taskType = taskType;
+        this.totalRecordsProcessed = new AtomicLong(0);
     }
 
     /**
      * Builds and starts the Kafka Streams application for ensemble aggregation.
      */
     public void start() {
-
         this.startTime = System.currentTimeMillis();
-        this.lastLogTime = this.startTime; // Initialize lastLogTime
-
+        this.lastLogTime = this.startTime;
 
         StreamsBuilder builder = new StreamsBuilder();
 
-        // 1) Input partial predictions topic, e.g. "EnsembleTopicForData-0"
-        String ensembleInputTopic = "EnsembleTopicForData-" + streamId +"-"+ target;
-        // 2) Output final ensemble topic, e.g. "OutputTopicForData-0"
-        String outputTopic = "OutputTopicForData-" + streamId + "-"+ target;
+        // --- DEFINE TOPICS ---
+        String ensembleInputTopic = "EnsembleTopicForData-" + streamId + "-" + target;
+        String outputTopic = "OutputTopicForData-" + streamId + "-" + target;
+        String activeMicroservicesTopic = "active-microservices";
 
-        System.out.println("Aggregator For streamid:"+streamId +" and target :" +target +" is for: "+taskType);
+        // --- DEFINE STATE STORE NAMES ---
+        String membershipStateStoreName = "membership-state-store-for-" + streamId + "-" + target;
+        String partialsStoreName = "partials-agg-store-for-" + streamId + "-" + target;
 
-
-        // Serdes
+        // --- DEFINE SERDES ---
         Serde<String> stringSerde = Serdes.String();
         Serde<PartialPrediction> partialPredictionSerde = new GeneralSerde<>(PartialPrediction.class);
         Serde<EnsembleResult> ensembleResultSerde = new GeneralSerde<>(EnsembleResult.class);
+        Serde<MicroServiceInfo> microserviceInfoSerde = new GeneralSerde<>(MicroServiceInfo.class);
+        Serde<List<PartialPrediction>> listOfPredictionsSerde = new ListOfPartialPredictionSerde();
 
+        // --- CREATE THE MEMBERSHIP KTABLE ---
+        // This KTable is the "source of truth" for which algorithms are currently active for any group.
+        builder.table(
+                activeMicroservicesTopic,
+                Consumed.with(stringSerde, microserviceInfoSerde),
+                Materialized.<String, MicroServiceInfo, KeyValueStore<Bytes, byte[]>>as(membershipStateStoreName)
+                        .withKeySerde(stringSerde)
+                        .withValueSerde(microserviceInfoSerde)
+        );
 
+        // --- CREATE THE PARTIAL RESULTS STORE ---
+        // This store holds the incoming predictions for each recordID.
+        StoreBuilder<KeyValueStore<String, List<PartialPrediction>>> partialsStoreBuilder =
+                Stores.keyValueStoreBuilder(
+                        Stores.persistentKeyValueStore(partialsStoreName),
+                        stringSerde,
+                        listOfPredictionsSerde
+                );
+        builder.addStateStore(partialsStoreBuilder);
 
-        // KStream of partial predictions keyed by recordId
+        // --- DEFINE THE INPUT STREAM OF PARTIAL PREDICTIONS ---
         KStream<String, PartialPrediction> partialStream = builder.stream(
                 ensembleInputTopic,
                 Consumed.with(stringSerde, partialPredictionSerde)
         );
 
-         //Build a state store for accumulating partial predictions:
-        StoreBuilder<KeyValueStore<String, List<PartialPrediction>>> storeBuilder =
-                Stores.keyValueStoreBuilder(
-                       Stores.persistentKeyValueStore("ensemble-agg-store"),
-                        stringSerde,
-                        new ListOfPartialPredictionSerde()
-               );
-       builder.addStateStore(storeBuilder);
+        // --- START EVALUATION SERVICES (if applicable) ---
+        if ("Classification".equalsIgnoreCase(taskType)) {
+            ClassificationEvaluationService eval = new ClassificationEvaluationService(streamId, target);
+            eval.cleanUp();
+            eval.start();
+        } else {
+            RegressionEvaluationService eval = new RegressionEvaluationService(streamId, target);
+            eval.cleanUp();
+            eval.start();
+        }
 
-
-      //   StoreBuilder<KeyValueStore<String,Map<String,PartialPrediction>>> storeBuilder =
-        //    Stores.keyValueStoreBuilder(
-        //  Stores.persistentKeyValueStore("ensemble-agg-store"),
-          // stringSerde,
-        //  new MapPartialPredictionsSerde()
-          //  );
-       //   builder.addStateStore(storeBuilder);
-
-/*
-   if(taskType.equalsIgnoreCase("Classification"))
-   {
-       ClassificationEvaluationService eval = new ClassificationEvaluationService(streamId,target);
-       eval.cleanUp();
-       eval.start();
-   }
-   else {
-       RegressionEvaluationService eval = new RegressionEvaluationService(streamId,target);
-       eval.cleanUp();
-       eval.start();
-   }
-
- */
-
-
-
-
-        // Use a custom processor that collects partial predictions and emits EnsembleResult
+        // --- PROCESS THE STREAM ---
         KStream<String, EnsembleResult> finalEnsembleStream = partialStream.process(
-                () -> new EnsembleAggregatorProcessor("ensemble-agg-store", this.countHolder,this.taskType),
-                "ensemble-agg-store"
+                () -> new EnsembleAggregatorProcessor(
+                        partialsStoreName,
+                        membershipStateStoreName,
+                        this.streamId, // Pass the correct lookup key (the streamId)
+                        this.target    // Pass the target for filtering
+                ),
+                // You must explicitly connect BOTH state stores that the processor needs to access.
+                partialsStoreName,
+                membershipStateStoreName
         );
 
-        // Write final results to "OutputTopicForData-<streamId>"
+        // --- WRITE FINAL RESULTS TO OUTPUT TOPIC ---
         finalEnsembleStream.peek((k, v) -> recordProcessed())
                 .to(outputTopic, Produced.with(stringSerde, ensembleResultSerde));
 
-        // Build the topology and start Streams
+        // Build and start the Kafka Streams application
         this.streams = new KafkaStreams(builder.build(), getStreamsConfig());
         this.streams.start();
     }
 
-
-
-
-    public void updateCount(long newCount) {
-        this.countHolder.set(newCount);
-
-    }
-
-    /**
-     * Stops the Kafka Streams application.
-     */
     public void stop() {
         if (streams != null) {
             streams.close();
         }
     }
 
-    /**
-     * Optionally, cleans up local state directories. Typically used only in dev.
-     */
     public void cleanUp() {
         if (streams != null) {
             streams.cleanUp();
         }
     }
 
-
     private Properties getStreamsConfig() {
         Properties props = new Properties();
-        // Must be unique for each aggregator instance
-        props.put(StreamsConfig.APPLICATION_ID_CONFIG,"EnsembleAggregatorMicroserviceFor-" + streamId+"-"+ target);
-
-        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "broker:9092");
-
-       // props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG,"broker:9092");
-
-        //props.put(StreamsConfig.STATE_DIR_CONFIG, "C:/dataset/tmp/kafka-streams");
-      //  props.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE_V2);
-       props.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/kafka-streams");
-
-        // read from earliest so we pick up partial predictions
+        // Must be unique for each aggregator instance to avoid state conflicts
+        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "EnsembleAggregatorMicroserviceFor-" + streamId + "-" + target);
+        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, EnvironmentConfiguration.getBootstrapServers());
+        props.put(StreamsConfig.STATE_DIR_CONFIG, EnvironmentConfiguration.getTempDir());
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-
+        // Increase cache for better performance with stateful operations
+        props.put(StreamsConfig.STATESTORE_CACHE_MAX_BYTES_CONFIG, 10 * 1024 * 1024L); // 10MB
+        props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 1000); // Commit every second
 
         return props;
     }
-
-
 
     private void recordProcessed() {
         long currentCount = totalRecordsProcessed.incrementAndGet();
@@ -189,29 +166,18 @@ public class EnsembleAggregatorMicroservice {
             double totalThroughput = currentCount / totalElapsedSeconds;
 
             double deltaSeconds = (currentTime - lastLogTime) / 1000.0;
-            double instantThroughput = 10000.0 / deltaSeconds;
+            // Avoid division by zero if deltaSeconds is too small
+            if (deltaSeconds > 0) {
+                double instantThroughput = 10000.0 / deltaSeconds;
+                System.out.printf("Instant Throughput EXIT (last 10k records): %.2f records/second%n", instantThroughput);
+            }
 
             System.out.printf(
-                    "Throughput EXIT : : %.2f records/second (Processed: %d records in %.2f seconds) with %d threads%n",
-                    totalThroughput, currentCount, totalElapsedSeconds,2
-
+                    "Throughput EXIT: %.2f records/second (Processed: %d records in %.2f seconds)%n",
+                    totalThroughput, currentCount, totalElapsedSeconds
             );
 
-            System.out.printf("Instant Throughput EXIT (last 10k records): %.2f records/second%n",
-                    instantThroughput);
-
-            lastLogTime = currentTime; // Update lastLogTime to current time
+            lastLogTime = currentTime;
         }
-    }
-
-    // Optional main() if you want to run this aggregator standalone via command line
-    public static void main(String[] args) {
-        // Example usage: aggregator for streamId="0", expecting partials from 3 algorithms
-       // EnsembleAggregatorMicroservice aggregator = new EnsembleAggregatorMicroservice("0", 3);
-       // aggregator.cleanUp(); // only in dev
-       // aggregator.start();
-
-        // Add shutdown hook for graceful exit
-       // Runtime.getRuntime().addShutdownHook(new Thread(aggregator::stop));
     }
 }
